@@ -21,11 +21,26 @@ const mockData = {
 //Make a server
 const server = module.exports = net.createServer();
 
+//Make a pool - not sure if I need this though
+const pool = [];
+
+ee.on('default', (client, string) => client.socket.write(`Invalid command: ${string.trim().split(' ', 1)}\n`));
+
+//Just trying something with all
+ee.on('@all', (client, string) => pool.forEach(client => client.socket.write('helloooo' )));
+
+
 
 server.on('connection', socket => {
   let client = new Client(socket);
 
-})
+  socket.on('data', data => cmdParser(client, data, ee));
+  socket.on('close', () => {
+    client.socket.end();
+  });
+
+  socket.on('error', console.error);
+});
 
 
 //Console that server is listening
