@@ -8,6 +8,11 @@ const Client = require('./model/client');
 const cmdParser  = require('./lib/command-parser');
 const PORT = process.env.PORT || 3000;
 
+//Requiring in filesystem so we can do things with streams
+const fs = require('fs');
+const chatStream = fs.createReadStream()
+
+
 //Dummy data for Grover items
 const mockData = {
   'wearables': {
@@ -27,7 +32,7 @@ const pool = [];
 // ee.on('default', (client, string) => client.socket.write(`Invalid command: ${string.trim().split(' ', 1)}\n`))
 ee.on('wearables', (client, string) => pool.forEach(c => c.socket.write(`${mockData.wearables.item9.type}`)));
 
-ee.on('@quit', (client) => {
+ee.on('quit', (client) => {
   pool.forEach(c => c.socket.write(`${client.nick} has left the channel\n`))
   client.socket.emit('close', client)
 })
@@ -42,12 +47,12 @@ server.on('connection', socket => {
 
   socket.on('data', data => cmdParser(client, data, ee))
   socket.on('close', () => {
-    let idx = pool.indexOf(client)
-    client.socket.end() // differs from .destroy()
-    delete pool[idx]
-  })
-  socket.on('error', console.error)
-})
+    let idx = pool.indexOf(client);
+    client.socket.end();
+    delete pool[idx];
+  });
+  socket.on('error', console.error);
+});
 
 
 //Console that server is listening
