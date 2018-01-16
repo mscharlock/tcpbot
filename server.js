@@ -24,23 +24,30 @@ const server = module.exports = net.createServer();
 //Make a pool - not sure if I need this though
 const pool = [];
 
-ee.on('default', (client, string) => client.socket.write(`Invalid command: ${string.trim().split(' ', 1)}\n`));
+// ee.on('default', (client, string) => client.socket.write(`Invalid command: ${string.trim().split(' ', 1)}\n`))
+ee.on('wearables', (client, string) => pool.forEach(c => c.socket.write(`${mockData.wearables.item9.type}`)));
 
-//Just trying something with all
-ee.on('@all', (client, string) => pool.forEach(client => client.socket.write('helloooo' )));
-
-
+ee.on('@quit', (client) => {
+  pool.forEach(c => c.socket.write(`${client.nick} has left the channel\n`))
+  client.socket.emit('close', client)
+})
 
 server.on('connection', socket => {
-  let client = new Client(socket);
+  let client = new Client(socket)
+  pool.push(client)
+  pool.forEach(c => c.socket.write(`Hello, I am groverbot. What can I help you find today? Type in one of the following options:
+    1. wearables
+    2. another thing
+    \n`))
 
-  socket.on('data', data => cmdParser(client, data, ee));
+  socket.on('data', data => cmdParser(client, data, ee))
   socket.on('close', () => {
-    client.socket.end();
-  });
-
-  socket.on('error', console.error);
-});
+    let idx = pool.indexOf(client)
+    client.socket.end() // differs from .destroy()
+    delete pool[idx]
+  })
+  socket.on('error', console.error)
+})
 
 
 //Console that server is listening
