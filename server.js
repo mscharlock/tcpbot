@@ -145,53 +145,66 @@ const ee = new EE();
 const Client = require('./model/client');
 const cmdParser  = require('./lib/command-parser');
 const PORT = process.env.PORT || 3000;
+const express = require('express');
 const app = require('express')();
 const http = require('http').Server(app);
+//Making a pool/room for clients to go into - seems like even if you have one client at a time (which you would if you had some kind of auth'd login system, you still need this?)
+const pool = [];
+const sIO = require('socket.io')(http);
 
 app.get('/', function(req, res) {
-  res.send('Hello world!'); //Print hello world to the HTML file to begin with
+  res.sendFile(__dirname + '/index.html');
 });
 
+//Console to see if server is up
 http.listen(3000, function() {
-  console.log('We are listening on port 3000'); //Log a successful connection in the terminal
+  console.log('We are listening on port 3000');
 });
 
-//Make a pool - not sure if I need this though, if it's only one client at a time
-const pool = [];
-
-//Event emitters for our commands
-ee.on('wearables', (client, string) => pool.forEach(c =>  c.socket.write(
-  'Great, here are some options we offer:' `+ ${groverData.wearables.item16.name} `)));
-//
-//TO DO: NEED TO INSERT METHODS FOR THE REST OF THEM TOO
-// ee.on('drones', (client, string) => pool.forEach(c => c.socket.write(`${mockData.wearables.item9.type}`)));
 
 
-ee.on('quit', (client) => {
-  pool.forEach(c => c.socket.write('Goodbye!'));
-  client.socket.emit('close', client);
-});
-
-server.on('connection', socket => {
-  let client = new Client(socket);
-  pool.push(client);
-  pool.forEach(c => c.socket.write(`Hello, I am groverbot. What can I help you find today? Type in one of the following options:
-    1. phones & tablets
-    2. drones
-    3. gaming & VR
-    4. computing
-    5. wearables
-    6. smart home
-    \n`));
-
-  socket.on('data', data => cmdParser(client, data, ee));
-  socket.on('close', () => {
-    let idx = pool.indexOf(client);
-    client.socket.end();
-    delete pool[idx];
+//on connection of socket, console and emit message
+sIO.on('connection', function(socket) {
+  console.log('Someone connected!');
+  socket.on('chat message', function(msg) {
+    sIO.emit('chat message', msg); //Display the incoming message
+    sIO.emit('hello I am the Groverbot!');
   });
-  socket.on('error', console.error);
 });
 
-//Console that server is listening
-server.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
+// //Event emitters for our commands
+// ee.on('wearables', (client, string) => pool.forEach(c =>  c.socket.write(
+//   'Great, here are some options we offer:' `+ ${groverData.wearables.item16.name} `)));
+// //
+// //TO DO: NEED TO INSERT METHODS FOR THE REST OF THEM TOO
+// // ee.on('drones', (client, string) => pool.forEach(c => c.socket.write(`${mockData.wearables.item9.type}`)));
+//
+//
+// ee.on('quit', (client) => {
+//   pool.forEach(c => c.socket.write('Goodbye!'));
+//   client.socket.emit('close', client);
+// });
+//
+// server.on('connection', socket => {
+//   let client = new Client(socket);
+//   pool.push(client);
+//   pool.forEach(c => c.socket.write(`Hello, I am groverbot. What can I help you find today? Type in one of the following options:
+//     1. phones & tablets
+//     2. drones
+//     3. gaming & VR
+//     4. computing
+//     5. wearables
+//     6. smart home
+//     \n`));
+//
+//   socket.on('data', data => cmdParser(client, data, ee));
+//   socket.on('close', () => {
+//     let idx = pool.indexOf(client);
+//     client.socket.end();
+//     delete pool[idx];
+//   });
+//   socket.on('error', console.error);
+// });
+//
+// //Console that server is listening
+// server.listen(PORT, () => console.log(`Listening on port: ${PORT}`));
