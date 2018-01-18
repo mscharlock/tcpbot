@@ -1,14 +1,6 @@
 'use strict';
 
-//requiring in what we need
-const net = require('net');
-const EE = require('events').EventEmitter;
-const ee = new EE();
-const Client = require('./model/client');
-const cmdParser  = require('./lib/command-parser');
-const PORT = process.env.PORT || 3000;
-
-//Data for Grover items
+//Giant object that's the data for Grover items: probably would be better to have a database of this information and make it relational to a user profile obj
 const groverData = {
   'phones & tablets': {
     'item1': {
@@ -144,8 +136,25 @@ const groverData = {
   }
 };
 
-//Make a server
-const server = module.exports = net.createServer();
+//-------------------------------------------------------------------
+//BUILDING THE ACTUAL SERVER//
+
+//requiring in what we need
+const EE = require('events').EventEmitter;
+const ee = new EE();
+const Client = require('./model/client');
+const cmdParser  = require('./lib/command-parser');
+const PORT = process.env.PORT || 3000;
+const app = require('express')();
+const http = require('http').Server(app);
+
+app.get('/', function(req, res) {
+  res.send('Hello world!'); //Print hello world to the HTML file to begin with
+});
+
+http.listen(3000, function() {
+  console.log('We are listening on port 3000'); //Log a successful connection in the terminal
+});
 
 //Make a pool - not sure if I need this though, if it's only one client at a time
 const pool = [];
