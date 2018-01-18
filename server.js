@@ -8,11 +8,6 @@ const Client = require('./model/client');
 const cmdParser  = require('./lib/command-parser');
 const PORT = process.env.PORT || 3000;
 
-//IDEA: Requiring in filesystem so we can do things with streams
-// const fs = require('fs');
-// const chatStream = fs.createReadStream()
-
-
 //Data for Grover items
 const groverData = {
   'phones & tablets': {
@@ -155,25 +150,22 @@ const server = module.exports = net.createServer();
 //Make a pool - not sure if I need this though, if it's only one client at a time
 const pool = [];
 
-
-//OPTIONAL: catchall for commands that don't work ee.on('default', (client, string) => client.socket.write(`Invalid command: ${string.trim().split(' ', 1)}\n`))
-
-
 //Event emitters for our commands
-ee.on('wearables', (client, string) => pool.forEach(c => //TO DO: NEED TO FIX SO IT IS MORE COMPLETE: c.socket.write(`${groverData.wearables.item9.name}`)));
+ee.on('wearables', (client, string) => pool.forEach(c =>  c.socket.write(
+  'Great, here are some options we offer:' `+ ${groverData.wearables.item16.name} `)));
 //
 //TO DO: NEED TO INSERT METHODS FOR THE REST OF THEM TOO
 // ee.on('drones', (client, string) => pool.forEach(c => c.socket.write(`${mockData.wearables.item9.type}`)));
 
 
 ee.on('quit', (client) => {
-  pool.forEach(c => c.socket.write(`${client.nick} has left the channel\n`))
-  client.socket.emit('close', client)
-})
+  pool.forEach(c => c.socket.write('Goodbye!'));
+  client.socket.emit('close', client);
+});
 
 server.on('connection', socket => {
-  let client = new Client(socket)
-  pool.push(client)
+  let client = new Client(socket);
+  pool.push(client);
   pool.forEach(c => c.socket.write(`Hello, I am groverbot. What can I help you find today? Type in one of the following options:
     1. phones & tablets
     2. drones
@@ -181,9 +173,9 @@ server.on('connection', socket => {
     4. computing
     5. wearables
     6. smart home
-    \n`))
+    \n`));
 
-  socket.on('data', data => cmdParser(client, data, ee))
+  socket.on('data', data => cmdParser(client, data, ee));
   socket.on('close', () => {
     let idx = pool.indexOf(client);
     client.socket.end();
